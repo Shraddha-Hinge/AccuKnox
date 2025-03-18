@@ -1,0 +1,114 @@
+
+Question 1: By default are django signals executed synchronously or asynchronously? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
+Answer:By default, Django signals are executed synchronously. This means that the signal handlers (receivers) run immediately in the same execution flow as the signal sender.
+code:
+import time
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def slow_signal_handler(sender, instance, **kwargs):
+    print("Signal received. Starting long task...")
+    time.sleep(5)  # Simulating a long-running task
+    print("Signal handler finished execution.")
+
+# Creating a user instance to trigger the signal
+print("Creating user...")
+user = User.objects.create(username="testuser")
+print("User creation completed.")
+
+code explaination:
+Django signals are executed immediately when triggered. This means that the execution of the sender pauses until all connected signal handlers have completed.
+We define a post_save signal for the User model.
+The signal handler simulates a delay of 5 seconds using time.sleep(5).
+The sequence of prints helps us confirm whether Django waits for the signal to finish before continuing execution.
+The output confirms that the signal runs synchronously since "User creation completed." appears only after the signal handler finishes.
+
+
+
+Question 2: Do django signals run in the same thread as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
+Answer:Yes, Django signals run in the same thread as the caller by default.
+Proof:
+import threading
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def check_thread(sender, instance, **kwargs):
+    print(f"Signal is running in thread: {threading.current_thread().name}")
+
+print(f"Main thread: {threading.current_thread().name}")
+user = User.objects.create(username="thread_test")
+
+code explaination:
+By default, Django signals execute in the same thread as the sender. There is no automatic multi-threading or asynchronous behavior unless explicitly set up.
+We use Python’s threading.current_thread().name to check the name of the current thread.
+We print the thread name before triggering the signal and inside the signal.
+Since the output confirms that both messages print MainThread, we prove that the signal runs in the same thread as the caller.
+
+
+Question 3: By default do django signals run in the same database transaction as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
+By default, Django signals run in the same transaction as the caller unless explicitly handled otherwise.
+Proof:
+from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def signal_transaction(sender, instance, **kwargs):
+    print(f"Inside signal: User ID {instance.id} exists in DB? {'Yes' if User.objects.filter(id=instance.id).exists() else 'No'}")
+
+try:
+    with transaction.atomic():
+        user = User(username="rollback_test")
+        user.save()
+        raise Exception("Rolling back transaction!")  # This will cause rollback
+except Exception as e:
+    print("Transaction rolled back!")
+
+print(f"Outside transaction: User ID {user.id} exists in DB? {'Yes' if User.objects.filter(id=user.id).exists() else 'No'}")
+
+code explaination:
+Django signals execute within the same transaction as the caller.
+If the caller rolls back the transaction, any database changes made by the signal will also be rolled back.
+We start a database transaction using with transaction.atomic().
+We create and save a User instance inside the transaction.
+The signal checks if the user exists in the database before the transaction commits.
+Then, we force an exception to roll back the transaction.
+Outside the transaction, we check if the user still exists.
+Since the signal sees the user, but the final check shows that the user does not exist after rollback, this proves that the signal runs in the same transaction as the caller.
+
+
+
+Topic: Custom Classes in Python
+
+Description: You are tasked with creating a Rectangle class with the following requirements:
+
+An instance of the Rectangle class requires length:int and width:int to be initialized.
+We can iterate over an instance of the Rectangle class 
+When an instance of the Rectangle class is iterated over, we first get its length in the format: {'length': <VALUE_OF_LENGTH>} followed by the width {width: <VALUE_OF_WIDTH>}
+
+Implementation:
+class Rectangle:
+    def __init__(self, length: int, width: int):
+        self.length = length
+        self.width = width
+
+    def __iter__(self):
+        yield {'length': self.length}
+        yield {'width': self.width}
+
+# Example Usage
+rect = Rectangle(10, 5)
+
+for item in rect:
+    print(item)
+
+code explaination:
+When an instance of Rectangle is iterated over, Python calls the __iter__ method.
+The __iter__ method first yields {'length': self.length}.
+On the next iteration, it yields {'width': self.width}.
+The loop stops after both values are yielded.
