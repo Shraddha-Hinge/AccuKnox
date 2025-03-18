@@ -25,7 +25,7 @@ The signal handler simulates a delay of 5 seconds using time.sleep(5).
 The sequence of prints helps us confirm whether Django waits for the signal to finish before continuing execution.
 The output confirms that the signal runs synchronously since "User creation completed." appears only after the signal handler finishes.
 
-
+===========================================================================================================================================
 
 Question 2: Do django signals run in the same thread as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
 Answer:Yes, Django signals run in the same thread as the caller by default.
@@ -48,6 +48,7 @@ We use Python’s threading.current_thread().name to check the name of the curre
 We print the thread name before triggering the signal and inside the signal.
 Since the output confirms that both messages print MainThread, we prove that the signal runs in the same thread as the caller.
 
+===========================================================================================================================================
 
 Question 3: By default do django signals run in the same database transaction as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
 By default, Django signals run in the same transaction as the caller unless explicitly handled otherwise.
@@ -81,9 +82,9 @@ Then, we force an exception to roll back the transaction.
 Outside the transaction, we check if the user still exists.
 Since the signal sees the user, but the final check shows that the user does not exist after rollback, this proves that the signal runs in the same transaction as the caller.
 
+====================================================================================================================================
 
-
-**Topic: Custom Classes in Python**
+Topic: Custom Classes in Python
 
 Description: You are tasked with creating a Rectangle class with the following requirements:
 
@@ -107,7 +108,6 @@ for item in rect:
     print(item)
 
 code explaination:
-
 When an instance of Rectangle is iterated over, Python calls the __iter__ method.
 The __iter__ method first yields {'length': self.length}.
 On the next iteration, it yields {'width': self.width}.
